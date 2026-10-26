@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nestora — PG & Rental Dispute Evidence Platform</title>
+    <meta name="description" content="Comprehensive evidence vault, deposit recovery calculator, move-in/out room condition comparison, AI tenancy clause analyzer, and lawyer-ready legal pack generator for PG tenants and coliving residents." />
+    <meta property="og:title" content="Nestora — PG & Rental Dispute Evidence Platform" />
+    <meta property="og:description" content="Comprehensive evidence vault, deposit recovery calculator, move-in/out room condition comparison, AI tenancy clause analyzer, and lawyer-ready legal pack generator for PG tenants and coliving residents." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#059669" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Nestora" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>
+      // Gracefully handle Vite HMR WebSocket closing in AI Studio preview iframe environment
+      window.addEventListener('error', function (event) {
+        if (
+          event.message &&
+          (event.message.includes('WebSocket closed without opened') ||
+           event.message.includes('WebSocket'))
+        ) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+          return true;
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function (event) {
+        if (
+          event.reason &&
+          String(event.reason?.message || event.reason).includes('WebSocket')
+        ) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+        }
+      }, true);
+      const originalConsoleError = console.error;
+      console.error = function (...args) {
+        if (
+          args[0] &&
+          (String(args[0]?.message || args[0]).includes('WebSocket closed without opened') ||
+           String(args[0]?.stack || '').includes('@vite/client'))
+        ) {
+          return;
+        }
+        originalConsoleError.apply(console, args);
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

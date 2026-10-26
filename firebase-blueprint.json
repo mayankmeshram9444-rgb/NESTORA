@@ -1,0 +1,183 @@
+{
+  "entities": {
+    "LandownerProfile": {
+      "title": "LandownerProfile",
+      "description": "Profile information for a property owner managing apartment units.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the profile owner.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Full name of the landowner.",
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Email address of the landowner.",
+          "maxLength": 150
+        },
+        "mobile": {
+          "type": "string",
+          "description": "Mobile number of the landowner.",
+          "maxLength": 40
+        },
+        "residentialAddress": {
+          "type": "string",
+          "description": "Residential or office address of the landowner.",
+          "maxLength": 300
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "description": "Primary preferred language.",
+          "maxLength": 60
+        },
+        "aboutYou": {
+          "type": "string",
+          "description": "Bio or property management description.",
+          "maxLength": 600
+        },
+        "vacantUnits": {
+          "type": "number",
+          "description": "Count of vacant apartment units."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the profile was last updated."
+        }
+      },
+      "required": [
+        "ownerId",
+        "fullName",
+        "email",
+        "mobile",
+        "residentialAddress",
+        "preferredLanguage",
+        "aboutYou",
+        "vacantUnits",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ApartmentCase": {
+      "title": "ApartmentCase",
+      "description": "An apartment unit and tenancy record managed in Nestora.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the apartment case.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the user who owns this record.",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "roomCode": {
+          "type": "string",
+          "description": "Apartment unit code.",
+          "maxLength": 32
+        },
+        "pgName": {
+          "type": "string",
+          "description": "Apartment building or property name.",
+          "maxLength": 150
+        },
+        "roomNo": {
+          "type": "string",
+          "description": "Flat number and configuration label.",
+          "maxLength": 150
+        },
+        "occupancyStatus": {
+          "type": "string",
+          "enum": ["available", "pending_application", "approved_occupied"],
+          "description": "Current occupancy state of the apartment unit.",
+          "maxLength": 40
+        },
+        "monthlyRent": {
+          "type": "number",
+          "description": "Monthly rent amount in INR."
+        },
+        "securityDeposit": {
+          "type": "number",
+          "description": "Security deposit amount in INR."
+        },
+        "rentStatus": {
+          "type": "string",
+          "enum": ["Paid", "Pending", "Overdue"],
+          "description": "Current rent payment status.",
+          "maxLength": 20
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Active",
+            "Disputed Deductions",
+            "Notice Served",
+            "Resolved",
+            "Legal Notice Issued"
+          ],
+          "description": "Case status.",
+          "maxLength": 40
+        },
+        "caseDetails": {
+          "type": "object",
+          "description": "Structured map containing tenancy metadata, sub-meter readings, payments, complaints, and inspections."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the apartment case was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the apartment case was last updated."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "roomCode",
+        "pgName",
+        "roomNo",
+        "occupancyStatus",
+        "monthlyRent",
+        "securityDeposit",
+        "rentStatus",
+        "status",
+        "caseDetails",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/profiles/{userId}": {
+      "schema": {
+        "$ref": "#/entities/LandownerProfile"
+      },
+      "description": "Stores private landowner profile details isolated to the authenticated user."
+    },
+    "/cases/{caseId}": {
+      "schema": {
+        "$ref": "#/entities/ApartmentCase"
+      },
+      "description": "Stores apartment units, tenancy agreements, payments, complaints, and inspection records owned by the authenticated user."
+    }
+  }
+}

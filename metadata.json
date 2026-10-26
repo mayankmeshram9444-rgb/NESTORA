@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Remix NESTORA",
+  "description": "Manage your  RENT with ease: handle rent payments, maintenance requests, and house rules all in one place.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

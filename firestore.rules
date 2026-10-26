@@ -1,0 +1,192 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+
+    // Validation Blueprint: LandownerProfile
+    function isValidLandownerProfile(data) {
+      return data.keys().hasAll([
+        'ownerId',
+        'fullName',
+        'email',
+        'mobile',
+        'residentialAddress',
+        'preferredLanguage',
+        'aboutYou',
+        'vacantUnits',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId',
+        'fullName',
+        'email',
+        'mobile',
+        'residentialAddress',
+        'preferredLanguage',
+        'aboutYou',
+        'vacantUnits',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId == request.auth.uid &&
+      data.fullName is string && data.fullName.size() <= 120 &&
+      data.email is string && data.email.size() <= 150 &&
+      data.mobile is string && data.mobile.size() <= 40 &&
+      data.residentialAddress is string && data.residentialAddress.size() <= 300 &&
+      data.preferredLanguage is string && data.preferredLanguage.size() <= 60 &&
+      data.aboutYou is string && data.aboutYou.size() <= 600 &&
+      data.vacantUnits is number && data.vacantUnits >= 0 && data.vacantUnits <= 10000 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: ApartmentCase
+    function isValidApartmentCase(data) {
+      return data.keys().hasAll([
+        'id',
+        'ownerId',
+        'roomCode',
+        'pgName',
+        'roomNo',
+        'occupancyStatus',
+        'monthlyRent',
+        'securityDeposit',
+        'rentStatus',
+        'status',
+        'caseDetails',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'id',
+        'ownerId',
+        'roomCode',
+        'pgName',
+        'roomNo',
+        'occupancyStatus',
+        'monthlyRent',
+        'securityDeposit',
+        'rentStatus',
+        'status',
+        'caseDetails',
+        'createdAt',
+        'updatedAt'
+      ]) &&
+      data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 && data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+      data.ownerId == request.auth.uid &&
+      data.roomCode is string && data.roomCode.size() <= 32 &&
+      data.pgName is string && data.pgName.size() <= 150 &&
+      data.roomNo is string && data.roomNo.size() <= 150 &&
+      data.occupancyStatus is string && data.occupancyStatus.size() <= 40 &&
+      (data.occupancyStatus == 'available' || data.occupancyStatus == 'pending_application' || data.occupancyStatus == 'approved_occupied') &&
+      data.monthlyRent is number && data.monthlyRent >= 0 && data.monthlyRent <= 10000000 &&
+      data.securityDeposit is number && data.securityDeposit >= 0 && data.securityDeposit <= 100000000 &&
+      data.rentStatus is string && data.rentStatus.size() <= 20 &&
+      (data.rentStatus == 'Paid' || data.rentStatus == 'Pending' || data.rentStatus == 'Overdue') &&
+      data.status is string && data.status.size() <= 40 &&
+      (data.status == 'Active' || data.status == 'Disputed Deductions' || data.status == 'Notice Served' || data.status == 'Resolved' || data.status == 'Legal Notice Issued') &&
+      data.caseDetails is map && data.caseDetails.size() <= 50 &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    // Collection 1: /profiles/{userId} (PII Isolated to Owner)
+    match /profiles/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+        isValidId(userId) &&
+        request.auth.uid == userId &&
+        isValidLandownerProfile(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn() &&
+        isValidId(userId) &&
+        isValidLandownerProfile(incoming()) &&
+        request.auth.uid == userId &&
+        existing().ownerId == request.auth.uid &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'fullName',
+            'email',
+            'mobile',
+            'residentialAddress',
+            'preferredLanguage',
+            'aboutYou',
+            'vacantUnits',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId && existing().ownerId == request.auth.uid;
+    }
+
+    // Collection 2: /cases/{caseId}
+    match /cases/{caseId} {
+      allow get: if isSignedIn() && isValidId(caseId) && existing().ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+        isValidId(caseId) &&
+        incoming().id == caseId &&
+        isValidApartmentCase(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isSignedIn() &&
+        isValidId(caseId) &&
+        isValidApartmentCase(incoming()) &&
+        existing().ownerId == request.auth.uid &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().id == existing().id &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        existing().status != 'Resolved' &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'roomCode',
+            'pgName',
+            'roomNo',
+            'occupancyStatus',
+            'monthlyRent',
+            'securityDeposit',
+            'rentStatus',
+            'status',
+            'caseDetails',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isSignedIn() && isValidId(caseId) && existing().ownerId == request.auth.uid;
+    }
+  }
+}
